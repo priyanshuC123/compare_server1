@@ -27,49 +27,49 @@ class ProductURLs(BaseModel):
     url1: HttpUrl
     url2: HttpUrl
 
-user_agents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36"
-]
+# user_agents = [
+#     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+#     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
+#     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36"
+# ]
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
-def scrape_amazon_product_highlights(url):
-    max_retries = 5
-    for attempt in range(max_retries):
-        try:
-            headers = {
-                "User-Agent": random.choice(user_agents)
-            }
-            page = requests.get(url, headers=headers)
-            page.raise_for_status()  # Raises an HTTPError for bad responses
+# def scrape_amazon_product_highlights(url):
+#     max_retries = 5
+#     for attempt in range(max_retries):
+#         try:
+#             headers = {
+#                 "User-Agent": random.choice(user_agents)
+#             }
+#             page = requests.get(url, headers=headers)
+#             page.raise_for_status()  # Raises an HTTPError for bad responses
 
-            soup = BeautifulSoup(page.text, "html.parser")
-            titles = soup.find_all("span", class_="a-size-large product-title-word-break")
-            specs = soup.find_all("ul", class_="a-unordered-list a-vertical a-spacing-mini")    
+#             soup = BeautifulSoup(page.text, "html.parser")
+#             titles = soup.find_all("span", class_="a-size-large product-title-word-break")
+#             specs = soup.find_all("ul", class_="a-unordered-list a-vertical a-spacing-mini")    
 
-            highlights = [title.text for title in titles] + [spec.text for spec in specs] 
+#             highlights = [title.text for title in titles] + [spec.text for spec in specs] 
 
-            if highlights:
-                return highlights
+#             if highlights:
+#                 return highlights
 
-            logging.info(f"No highlights found on attempt {attempt + 1} for URL {url}")
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)  # Exponential backoff
+#             logging.info(f"No highlights found on attempt {attempt + 1} for URL {url}")
+#             if attempt < max_retries - 1:
+#                 time.sleep(2 ** attempt)  # Exponential backoff
 
-        except requests.RequestException as e:
-            logging.error(f"RequestException occurred on attempt {attempt + 1} for URL {url}: {str(e)}")
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)  # Exponential backoff
-                continue
-            else:
-                raise HTTPException(status_code=400, detail=str(e))
-        except Exception as e:
-            logging.error(f"Exception occurred on attempt {attempt + 1} for URL {url}: {str(e)}")
-            raise HTTPException(status_code=500, detail=str(e))
+#         except requests.RequestException as e:
+#             logging.error(f"RequestException occurred on attempt {attempt + 1} for URL {url}: {str(e)}")
+#             if attempt < max_retries - 1:
+#                 time.sleep(2 ** attempt)  # Exponential backoff
+#                 continue
+#             else:
+#                 raise HTTPException(status_code=400, detail=str(e))
+#         except Exception as e:
+#             logging.error(f"Exception occurred on attempt {attempt + 1} for URL {url}: {str(e)}")
+#             raise HTTPException(status_code=500, detail=str(e))
 
-    raise HTTPException(status_code=500, detail="Unable to retrieve product highlights after multiple attempts")
+#     raise HTTPException(status_code=500, detail="Unable to retrieve product highlights after multiple attempts")
 
 def scrape_flipkart_product_highlights(url):
     try:
@@ -97,19 +97,10 @@ async def read_root():
 @app.post("/")
 async def compare_products(urls: ProductURLs):
     try:
-        if urls.url1.host and  "amazon" in urls.url1.host:
-            product1_highlights = scrape_amazon_product_highlights(urls.url1)
-        elif urls.url1.host and "flipkart" in urls.url1.host:
-            product1_highlights = scrape_flipkart_product_highlights(urls.url1)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported URL1")
-
-        if urls.url2.host and "amazon" in urls.url2.host:
-            product2_highlights = scrape_amazon_product_highlights(urls.url2)
-        elif urls.url2.host and "flipkart" in urls.url2.host:
-            product2_highlights = scrape_flipkart_product_highlights(urls.url2)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported URL2")
+        
+        product1_highlights = scrape_flipkart_product_highlights(urls.url1)
+        product2_highlights = scrape_flipkart_product_highlights(urls.url2)
+        
     except HTTPException as e:
         raise e
     except Exception as e:
